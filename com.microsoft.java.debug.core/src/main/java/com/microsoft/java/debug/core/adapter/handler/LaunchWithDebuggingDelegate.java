@@ -1,5 +1,5 @@
 /*******************************************************************************
-* Copyright (c) 2017 Microsoft Corporation and others.
+* Copyright (c) 2017-2022 Microsoft Corporation and others.
 * All rights reserved. This program and the accompanying materials
 * are made available under the terms of the Eclipse Public License v1.0
 * which accompanies this distribution, and is available at
@@ -24,6 +24,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
 
 import com.google.gson.JsonObject;
+import com.google.gson.JsonSyntaxException;
+import com.microsoft.java.debug.core.Configuration;
 import com.microsoft.java.debug.core.DebugException;
 import com.microsoft.java.debug.core.DebugSession;
 import com.microsoft.java.debug.core.DebugUtility;
@@ -44,6 +46,7 @@ import com.microsoft.java.debug.core.protocol.Requests.CONSOLE;
 import com.microsoft.java.debug.core.protocol.Requests.Command;
 import com.microsoft.java.debug.core.protocol.Requests.LaunchArguments;
 import com.microsoft.java.debug.core.protocol.Requests.RunInTerminalRequestArguments;
+import com.microsoft.java.debug.core.protocol.Responses.RunInTerminalResponseBody;
 import com.sun.jdi.VirtualMachine;
 import com.sun.jdi.connect.Connector;
 import com.sun.jdi.connect.IllegalConnectorArgumentsException;
@@ -53,7 +56,6 @@ import com.sun.jdi.connect.VMStartException;
 
 public class LaunchWithDebuggingDelegate extends AbstractLaunchDelegate {
     private static final int ATTACH_TERMINAL_TIMEOUT = 20 * 1000;
-    private static final String TERMINAL_TITLE = "Java Debug Console";
     protected static final long RUNINTERMINAL_TIMEOUT = 10 * 1000;
     private VMHandler vmHandler = new VMHandler();
 
@@ -76,6 +78,8 @@ public class LaunchWithDebuggingDelegate extends AbstractLaunchDelegate {
             ((Connector.IntegerArgument) args.get("timeout")).setValue(ATTACH_TERMINAL_TIMEOUT);
             String address = listenConnector.startListening(args);
 
+            final String[] names = launchArguments.mainClass.split("[/\\.]");
+            final String terminalName = "Debug: " + names[names.length - 1];
             String[] cmds = LaunchRequestHandler.constructLaunchCommands(launchArguments, false, address);
             RunInTerminalRequestArguments requestArgs = null;
             if (launchArguments.console == CONSOLE.integratedTerminal) {
@@ -83,13 +87,13 @@ public class LaunchWithDebuggingDelegate extends AbstractLaunchDelegate {
                         cmds,
                         launchArguments.cwd,
                         launchArguments.env,
-                        TERMINAL_TITLE);
+                        terminalName);
             } else {
                 requestArgs = RunInTerminalRequestArguments.createExternalTerminal(
                         cmds,
                         launchArguments.cwd,
                         launchArguments.env,
-                        TERMINAL_TITLE);
+                        terminalName);
             }
             Request request = new Request(Command.RUNINTERMINAL.getName(),
                     (JsonObject) JsonUtils.toJsonTree(requestArgs, RunInTerminalRequestArguments.class));
@@ -103,10 +107,24 @@ public class LaunchWithDebuggingDelegate extends AbstractLaunchDelegate {
                     if (runResponse != null) {
                         if (runResponse.success) {
                             try {
+                                try {
+                                    RunInTerminalResponseBody terminalResponse = JsonUtils.fromJson(
+                                        JsonUtils.toJson(runResponse.body), RunInTerminalResponseBody.class);
+                                    context.setProcessId(terminalResponse.processId);
+                                    context.setShellProcessId(terminalResponse.shellProcessId);
+                                } catch (JsonSyntaxException e) {
+                                    logger.severe("Failed to resolve runInTerminal response: " + e.toString());
+                                }
                                 VirtualMachine vm = listenConnector.accept(args);
                                 vmHandler.connectVirtualMachine(vm);
                                 context.setDebugSession(new DebugSession(vm, logger));
                                 logger.info("Launching debuggee in terminal console succeeded.");
+                                if (context.getShellProcessId() > 0) {
+                                    ProcessHandle debuggeeProcess = LaunchUtils.findJavaProcessInTerminalShell(context.getShellProcessId(), cmds[0], 0);
+                                    if (debuggeeProcess != null) {
+                                        context.setProcessId(debuggeeProcess.pid());
+                                    }
+                                }
                                 resultFuture.complete(response);
                             } catch (TransportTimeoutException e) {
                                 int commandLength = StringUtils.length(launchArguments.cwd) + 1;

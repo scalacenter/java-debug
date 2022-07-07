@@ -31,12 +31,14 @@ import com.microsoft.java.debug.core.adapter.handler.HotCodeReplaceHandler;
 import com.microsoft.java.debug.core.adapter.handler.InitializeRequestHandler;
 import com.microsoft.java.debug.core.adapter.handler.InlineValuesRequestHandler;
 import com.microsoft.java.debug.core.adapter.handler.LaunchRequestHandler;
+import com.microsoft.java.debug.core.adapter.handler.ProcessIdHandler;
 import com.microsoft.java.debug.core.adapter.handler.RefreshVariablesHandler;
 import com.microsoft.java.debug.core.adapter.handler.RestartFrameHandler;
 import com.microsoft.java.debug.core.adapter.handler.ScopesRequestHandler;
 import com.microsoft.java.debug.core.adapter.handler.SetBreakpointsRequestHandler;
 import com.microsoft.java.debug.core.adapter.handler.SetDataBreakpointsRequestHandler;
 import com.microsoft.java.debug.core.adapter.handler.SetExceptionBreakpointsRequestHandler;
+import com.microsoft.java.debug.core.adapter.handler.SetFunctionBreakpointsRequestHandler;
 import com.microsoft.java.debug.core.adapter.handler.SetVariableRequestHandler;
 import com.microsoft.java.debug.core.adapter.handler.SourceRequestHandler;
 import com.microsoft.java.debug.core.adapter.handler.StackTraceRequestHandler;
@@ -125,10 +127,11 @@ public class DebugAdapter implements IDebugAdapter {
         registerHandlerForDebug(new SetDataBreakpointsRequestHandler(logger));
         registerHandlerForDebug(new InlineValuesRequestHandler(logger));
         registerHandlerForDebug(new RefreshVariablesHandler());
-
+        registerHandlerForDebug(new ProcessIdHandler());
+        registerHandlerForDebug(new SetFunctionBreakpointsRequestHandler(logger));
         // NO_DEBUG mode only
         registerHandlerForNoDebug(new DisconnectRequestWithoutDebuggingHandler(logger));
-
+        registerHandlerForNoDebug(new ProcessIdHandler());
     }
 
     private void registerHandlerForDebug(IDebugRequestHandler handler) {

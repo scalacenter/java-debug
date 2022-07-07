@@ -37,6 +37,7 @@ import com.microsoft.java.debug.core.DebugException;
 import com.microsoft.java.debug.core.DebugSettings;
 import com.microsoft.java.debug.core.DebugUtility;
 import com.microsoft.java.debug.core.IDebugSession;
+import com.microsoft.java.debug.core.LaunchException;
 import com.microsoft.java.debug.core.adapter.AdapterUtils;
 import com.microsoft.java.debug.core.adapter.ErrorCode;
 import com.microsoft.java.debug.core.adapter.IDebugAdapterContext;
@@ -138,6 +139,17 @@ public class LaunchRequestHandler implements IDebugRequestHandler {
         }
 
         return launch(launchArguments, response, context).thenCompose(res -> {
+            long processId = context.getProcessId();
+            long shellProcessId = context.getShellProcessId();
+            if (context.getDebuggeeProcess() != null) {
+                processId = context.getDebuggeeProcess().pid();
+            }
+
+            // If processId or shellProcessId exist, send a notification to client.
+            if (processId > 0 || shellProcessId > 0) {
+                context.getProtocolServer().sendEvent(new Events.ProcessIdNotification(processId, shellProcessId));
+            }
+
             LaunchUtils.releaseTempLaunchFile(context.getClasspathJar());
             LaunchUtils.releaseTempLaunchFile(context.getArgsfile());
             if (res.success) {
@@ -246,6 +258,22 @@ public class LaunchRequestHandler implements IDebugRequestHandler {
                 .subscribe((event) -> context.getProtocolServer().sendEvent(event));
             debuggeeConsole.start();
             resultFuture.complete(response);
+        } catch (LaunchException e) {
+            if (StringUtils.isNotBlank(e.getStdout())) {
+                OutputEvent event = convertToOutputEvent(e.getStdout(), Category.stdout, context);
+                context.getProtocolServer().sendEvent(event);
+            }
+            if (StringUtils.isNotBlank(e.getStderr())) {
+                OutputEvent event = convertToOutputEvent(e.getStderr(), Category.stderr, context);
+                context.getProtocolServer().sendEvent(event);
+            }
+
+            resultFuture.completeExceptionally(
+                    new DebugException(
+                            String.format("Failed to launch debuggee VM. Reason: %s", e.getMessage()),
+                            ErrorCode.LAUNCH_FAILURE.getId()
+                    )
+            );
         } catch (IOException | IllegalConnectorArgumentsException | VMStartException e) {
             resultFuture.completeExceptionally(
                     new DebugException(

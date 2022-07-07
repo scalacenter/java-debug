@@ -43,6 +43,8 @@ public class Types {
         public int line;
         public int column;
         public String name;
+        public String presentationHint;
+
 
         /**
          * Constructs a StackFrame with the given information.
@@ -57,13 +59,17 @@ public class Types {
          *          line number of the stack frame
          * @param col
          *          column number of the stack frame
+         * @param presentationHint
+         *          An optional hint for how to present this frame in the UI.
+         *          Values: 'normal', 'label', 'subtle'
          */
-        public StackFrame(int id, String name, Source src, int ln, int col) {
+        public StackFrame(int id, String name, Source src, int ln, int col, String presentationHint) {
             this.id = id;
             this.name = name;
             this.source = src;
             this.line = ln;
             this.column = col;
+            this.presentationHint = presentationHint;
         }
     }
 
@@ -90,6 +96,7 @@ public class Types {
         public int namedVariables;
         public int indexedVariables;
         public String evaluateName;
+        public VariablePresentationHint presentationHint;
 
         /**
          * Constructor.
@@ -343,6 +350,14 @@ public class Types {
         public ExceptionDetails[] innerException;
     }
 
+    public static class VariablePresentationHint {
+        public boolean lazy;
+
+        public VariablePresentationHint(boolean lazy) {
+            this.lazy = lazy;
+        }
+    }
+
     public static class Capabilities {
         public boolean supportsConfigurationDoneRequest;
         public boolean supportsHitConditionalBreakpoints;
@@ -359,5 +374,6 @@ public class Types {
         public ExceptionBreakpointFilter[] exceptionBreakpointFilters = new ExceptionBreakpointFilter[0];
         public boolean supportsDataBreakpoints;
         public boolean supportsClipboardContext;
+        public boolean supportsFunctionBreakpoints;
     }
 }
