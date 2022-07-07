@@ -22,7 +22,6 @@ import java.util.logging.Logger;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
-import com.microsoft.java.debug.core.Configuration;
 import com.microsoft.java.debug.core.DebugException;
 import com.microsoft.java.debug.core.adapter.ErrorCode;
 import com.microsoft.java.debug.core.adapter.IDebugAdapterContext;

@@ -25,7 +25,6 @@ import org.apache.commons.lang3.SystemUtils;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
-import com.microsoft.java.debug.core.Configuration;
 import com.microsoft.java.debug.core.DebugException;
 import com.microsoft.java.debug.core.DebugSession;
 import com.microsoft.java.debug.core.DebugUtility;
