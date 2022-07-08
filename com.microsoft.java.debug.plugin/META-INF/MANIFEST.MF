@@ -25,4 +25,4 @@ Bundle-ClassPath: lib/commons-io-2.11.0.jar,
  .,
  lib/rxjava-2.2.21.jar,
  lib/reactive-streams-1.0.4.jar,
- lib/com.microsoft.java.debug.core-0.38.0.jar
+ lib/com.microsoft.java.debug.core-0.38.0+1.jar
