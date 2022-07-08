@@ -56,7 +56,7 @@
                         <artifactItem>
                             <groupId>ch.epfl.scala</groupId>
                             <artifactId>com.microsoft.java.debug.core</artifactId>
-                            <version>0.38.0</version>
+                            <version>0.38.0+1</version>
                         </artifactItem>
                     </artifactItems>
                 </configuration>
