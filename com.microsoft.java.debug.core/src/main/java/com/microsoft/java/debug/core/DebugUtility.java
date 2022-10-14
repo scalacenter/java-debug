@@ -390,7 +390,11 @@ public class DebugUtility {
     }
 
     private static StepRequest createStepRequest(ThreadReference thread, int stepSize, int stepDepth, String[] classFilters, String[] classExclusionFilters) {
-        StepRequest request = thread.virtualMachine().eventRequestManager().createStepRequest(thread, stepSize, stepDepth);
+        EventRequestManager manager = thread.virtualMachine().eventRequestManager();
+        if (!manager.stepRequests().isEmpty()) {
+            new Exception().printStackTrace();
+        }
+        StepRequest request = manager.createStepRequest(thread, stepSize, stepDepth);
         if (classFilters != null) {
             for (String classFilter : classFilters) {
                 request.addClassFilter(classFilter);
