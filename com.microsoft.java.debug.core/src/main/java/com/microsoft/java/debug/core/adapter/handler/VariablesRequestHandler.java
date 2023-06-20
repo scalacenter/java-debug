@@ -79,7 +79,7 @@ public class VariablesRequestHandler implements IDebugRequestHandler {
         boolean showStaticVariables = DebugSettings.getCurrent().showStaticVariables;
 
         Map<String, Object> options = variableFormatter.getDefaultOptions();
-        IVariableProvider evaluateNameUtils = context.getProvider(IVariableProvider.class);
+        IVariableProvider variableProvider = context.getProvider(IVariableProvider.class);
         VariableUtils.applyFormatterOptions(options, varArgs.format != null && varArgs.format.hex);
         IEvaluationProvider evaluationEngine = context.getProvider(IEvaluationProvider.class);
 
@@ -262,12 +262,12 @@ public class VariablesRequestHandler implements IDebugRequestHandler {
                 String typeName = ((ObjectReference) containerNode.getProxiedVariable()).referenceType().name();
                 // TODO: This replacement will possibly change the $ in the class name itself.
                 typeName = typeName.replaceAll("\\$", ".");
-                evaluateName = evaluateNameUtils.getEvaluateName(javaVariable.evaluateName, "((" + typeName + ")" + containerEvaluateName + ")", false);
+                evaluateName = variableProvider.getEvaluateName(javaVariable.evaluateName, "((" + typeName + ")" + containerEvaluateName + ")", false);
             } else {
                 if (containerEvaluateName != null && containerEvaluateName.contains("%s")) {
                     evaluateName = String.format(containerEvaluateName, javaVariable.evaluateName);
                 } else {
-                    evaluateName = evaluateNameUtils.getEvaluateName(javaVariable.evaluateName, containerEvaluateName, containerNode.isIndexedVariable());
+                    evaluateName = variableProvider.getEvaluateName(javaVariable.evaluateName, containerEvaluateName, containerNode.isIndexedVariable());
                 }
             }
 
