@@ -66,14 +66,14 @@ public class StackTraceRequestHandler implements IDebugRequestHandler {
         int totalFrames = 0;
         if (thread != null) {
             try {
-                
+
                 totalFrames = thread.frameCount();
                 if (totalFrames <= stacktraceArgs.startFrame) {
                     response.body = new Responses.StackTraceResponseBody(result, totalFrames);
                     return CompletableFuture.completedFuture(response);
                 }
                 StackFrame[] frames = context.getStackFrameManager().reloadStackFrames(thread);
-                
+
                 int count = stacktraceArgs.levels == 0 ? totalFrames - stacktraceArgs.startFrame
                         : Math.min(totalFrames - stacktraceArgs.startFrame, stacktraceArgs.levels);
                 for (int i = stacktraceArgs.startFrame; i < frames.length && count-- > 0; i++) {
@@ -108,7 +108,9 @@ public class StackTraceRequestHandler implements IDebugRequestHandler {
         if (lineNumber < 0 && !location.method().isNative()) {
             // For other unavailable method, such as lambda expression's built-in methods run/accept/apply,
             // display "Unknown Source" in the Call Stack View.
-            clientSource = null;
+            clientSource = new Types.Source("Unknown Source", "unknown", 0);
+            // DAP specifies lineNumber to be set to 0 when unavailable
+            lineNumber = 0;
         }
         String presentationHint = decodedMethod.isGenerated() ? "subtle" : null;
         return new Types.StackFrame(frameId, formattedName, clientSource, lineNumber, context.isClientColumnsStartAt1() ? 1 : 0, presentationHint);
@@ -139,7 +141,7 @@ public class StackTraceRequestHandler implements IDebugRequestHandler {
             IDebugAdapterContext context) throws URISyntaxException {
         // use a lru cache for better performance
         String uri = context.getSourceLookupCache().computeIfAbsent(fullyQualifiedName, key -> {
-            
+
             String fromProvider = context.getProvider(ISourceLookUpProvider.class).getSourceFileURI(key, relativeSourcePath);
             // avoid return null which will cause the compute function executed again
             return StringUtils.isBlank(fromProvider) ? "" : fromProvider;
