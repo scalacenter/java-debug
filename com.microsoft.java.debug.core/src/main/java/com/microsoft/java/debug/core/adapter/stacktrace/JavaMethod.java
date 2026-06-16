@@ -19,6 +19,7 @@ public class JavaMethod implements DecodedMethod {
         String fullyQualifiedClassName = method.declaringType().name();
         formattedName.append(SimpleTypeFormatter.trimTypeName(fullyQualifiedClassName));
         formattedName.append(".");
+        formattedName.append(method.name());
         List<String> argumentTypeNames = method.argumentTypeNames().stream().map(SimpleTypeFormatter::trimTypeName).collect(Collectors.toList());
         formattedName.append("(");
         formattedName.append(String.join(",", argumentTypeNames));
